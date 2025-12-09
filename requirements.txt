@@ -1,16 +1,19 @@
-# CORE DEPENDENCIES
+# Core
 python-dotenv
 requests
 aiohttp
 beautifulsoup4
 streamlit
 
-# AGENT AND SEARCH
-crewai==0.28.8               # Lock CrewAI to a known stable release
+# Agent / LLM Stack
+crewai==0.28.8
 langchain-openai
-langchain-community==0.0.30  # <--- THIS IS THE CRITICAL LINE
+langchain-community>=0.2.1  # <-- FIXED! MUST NOT be 0.0.30
+langchain-core>=0.2.0
+
+# Search Tools
 duckduckgo-search
 ddgs
 
-# SOCIAL MEDIA
+# Social Media
 tweepy
