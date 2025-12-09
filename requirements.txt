@@ -8,7 +8,7 @@ streamlit
 # AGENT AND SEARCH
 crewai
 langchain-openai
-langchain-community
+langchain-community==0.0.30  # <--- THIS IS THE CRITICAL LINE
 duckduckgo-search
 ddgs
 
