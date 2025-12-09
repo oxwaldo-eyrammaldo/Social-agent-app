@@ -6,13 +6,13 @@ beautifulsoup4
 streamlit
 
 # CREW + LANGCHAIN
-crewai==1.7.0              # Latest stable release compatible with Python 3.13
-langchain-openai==0.1.21   # Pick the latest version compatible with your Python
+crewai==1.7.0
+langchain-openai==0.1.21
 langchain-community==0.0.38
 
 # SEARCH
 duckduckgo-search==6.1.0
-ddgs==1.13.6
+ddgs==9.9.3
 
 # SOCIAL MEDIA
 tweepy
