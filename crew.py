@@ -1,7 +1,7 @@
 import os
 from crewai import Agent, Task, Crew, Process
 from langchain_community.tools import DuckDuckGoSearchRun
-from langchain.tools import tool
+from langchain_core.tools import tool  # <-- CORRECTED LINE
 
 # 1. Define the Tools
 class SocialTools:
