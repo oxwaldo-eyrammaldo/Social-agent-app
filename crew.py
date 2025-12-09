@@ -1,7 +1,13 @@
 import os
 from crewai import Agent, Task, Crew, Process
-from langchain_community.tools import DuckDuckGoSearchRun # Keep this for use in the wrapper function
-from langchain_core.tools import tool
+
+# Imports for LLM and Tools:
+from langchain_openai import ChatOpenAI
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_core.tools import tool # Corrected decorator import
+
+# 0. Define the LLM Instance (using a model you have access to)
+openai_llm = ChatOpenAI(model='gpt-3.5-turbo') 
 
 # 1. Define the Tools
 class SocialTools:
@@ -11,17 +17,16 @@ class SocialTools:
         # In a real app, this is where you'd call the Twitter/LinkedIn API
         return f"POST_SUCCESS: {content}"
 
-# Define the search tool as a wrapped function to ensure compatibility
+# Define the search tool as a wrapped function for compatibility and validation
 @tool("Web Search Tool")
 def search_web(query: str) -> str:
     """
     Search the web for up-to-date information on a given topic.
     The agent MUST use this tool to find trending news.
     """
-    # This function uses the DuckDuckGoSearchRun class to perform the actual search
+    # This uses the DuckDuckGoSearchRun class to perform the actual search
     return DuckDuckGoSearchRun().run(query)
 
-# Note: We no longer need 'search_tool = DuckDuckGoSearchRun()'
 
 # 2. Define the Crew Generator Function
 def create_social_crew(topic, platform):
@@ -33,7 +38,8 @@ def create_social_crew(topic, platform):
         backstory='You are a researcher who finds viral news stories.',
         verbose=True,
         allow_delegation=False,
-        tools=[search_web] # Pass the WRAPPED FUNCTION here
+        tools=[search_web], # Use the wrapped search function
+        llm=openai_llm      # Assign the accessible LLM
     )
 
     manager = Agent(
@@ -42,10 +48,11 @@ def create_social_crew(topic, platform):
         backstory='You write punchy, engaging content.',
         verbose=True,
         allow_delegation=False,
-        tools=[SocialTools.post_content]
+        tools=[SocialTools.post_content],
+        llm=openai_llm      # Assign the accessible LLM
     )
 
-    # ... (Tasks and Crew definition remain the same)
+    # -- Tasks --
     task_research = Task(
         description=f'Find 2 interesting recent news items about {topic}.',
         expected_output='A summary of the news.',
