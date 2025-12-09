@@ -1,5 +1,6 @@
-crewai
-langchain_openai
-duckduckgo-search
 streamlit
-python-dotenv
+crewai
+langchain-openai
+langchain-community
+duckduckgo-search
+tweepy
