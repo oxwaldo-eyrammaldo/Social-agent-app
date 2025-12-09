@@ -6,7 +6,7 @@ beautifulsoup4
 streamlit
 
 # AGENT AND SEARCH
-crewai
+crewai==0.28.8               # Lock CrewAI to a known stable release
 langchain-openai
 langchain-community==0.0.30  # <--- THIS IS THE CRITICAL LINE
 duckduckgo-search
