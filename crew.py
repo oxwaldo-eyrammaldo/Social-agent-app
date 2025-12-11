@@ -4,15 +4,7 @@ from crewai import Agent, Task, Crew, Process
 # Imports for LLM and Tools:
 from langchain_openai import ChatOpenAI
 from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.tools import tool  # Correct decorator
-
-
-# 0. LLM Instance (FREE / VERY LOW COST MODEL)
-openai_llm = ChatOpenAI(
-    model="gpt-4o-mini",   # ← UPDATED HERE
-    temperature=0.7
-)
-
+from langchain_core.tools import tool
 
 # 1. Define the Tools
 class SocialTools:
@@ -21,8 +13,6 @@ class SocialTools:
         """Mock posting content to social media."""
         return f"POST_SUCCESS: {content}"
 
-
-# Wrapped search tool (this avoids ddgs validation errors)
 @tool("Web Search Tool")
 def search_web(query: str) -> str:
     """
@@ -32,12 +22,17 @@ def search_web(query: str) -> str:
     try:
         return DuckDuckGoSearchRun().run(query)
     except Exception as e:
-        # Prevent Streamlit crashes if ddgs fails
         return f"[SEARCH ERROR] {str(e)}"
-
 
 # 2. Crew Generator Function
 def create_social_crew(topic, platform):
+
+    # --- MOVED LLM SETUP INSIDE THE FUNCTION ---
+    # This ensures it only runs AFTER the user enters their API key in Streamlit
+    openai_llm = ChatOpenAI(
+        model="gpt-4o-mini",
+        temperature=0.7
+    )
 
     # -- Agents --
     researcher = Agent(
@@ -47,7 +42,7 @@ def create_social_crew(topic, platform):
         verbose=True,
         allow_delegation=False,
         tools=[search_web],
-        llm=openai_llm   # ← UPDATED
+        llm=openai_llm
     )
 
     manager = Agent(
@@ -57,7 +52,7 @@ def create_social_crew(topic, platform):
         verbose=True,
         allow_delegation=False,
         tools=[SocialTools.post_content],
-        llm=openai_llm   # ← UPDATED
+        llm=openai_llm
     )
 
     # -- Tasks --
