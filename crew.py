@@ -1,11 +1,10 @@
 import os
 from crewai import Agent, Task, Crew, Process
 
-# Imports for LLM and Tools:
+# Imports for LLM and Tools (Old Structure for CrewAI 0.30.11):
 from langchain_openai import ChatOpenAI
-from langchain.tools import DuckDuckGoSearchRun # UPDATED: Use old path
-from langchain.agents import Tool # UPDATED: Use old path
-# Note: In older crewai/langchain versions, tools were imported from langchain.agents
+from langchain.tools import DuckDuckGoSearchRun # UPDATED: Old import path
+from langchain.agents import Tool # UPDATED: Old import path
 
 # 1. Define Tool Functions (No Decorators)
 def post_content_func(content: str):
@@ -24,7 +23,6 @@ def search_web_func(query: str):
         return f"[SEARCH ERROR] {str(e)}"
 
 # 2. Wrap them in the Tool Class
-# This explicitly creates the tool object CrewAI expects
 post_tool = Tool(
     name="Post Content",
     func=post_content_func,
@@ -42,7 +40,6 @@ search_tool = Tool(
 def create_social_crew(topic, platform):
 
     # -- LLM Setup --
-    # Defined here so it runs AFTER the API key is set in Streamlit
     openai_llm = ChatOpenAI(
         model="gpt-4o-mini",
         temperature=0.7
@@ -55,7 +52,7 @@ def create_social_crew(topic, platform):
         backstory='You are a researcher who finds viral news stories.',
         verbose=True,
         allow_delegation=False,
-        tools=[search_tool],  # Use the manually created tool
+        tools=[search_tool],
         llm=openai_llm
     )
 
@@ -65,7 +62,7 @@ def create_social_crew(topic, platform):
         backstory='You write punchy, engaging content.',
         verbose=True,
         allow_delegation=False,
-        tools=[post_tool],    # Use the manually created tool
+        tools=[post_tool],
         llm=openai_llm
     )
 
