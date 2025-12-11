@@ -3,8 +3,9 @@ from crewai import Agent, Task, Crew, Process
 
 # Imports for LLM and Tools:
 from langchain_openai import ChatOpenAI
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.tools import Tool  # We use the Tool class instead of the decorator
+from langchain.tools import DuckDuckGoSearchRun # UPDATED: Use old path
+from langchain.agents import Tool # UPDATED: Use old path
+# Note: In older crewai/langchain versions, tools were imported from langchain.agents
 
 # 1. Define Tool Functions (No Decorators)
 def post_content_func(content: str):
