@@ -5,11 +5,11 @@ aiohttp
 beautifulsoup4
 streamlit
 
-# CREW + LANGCHAIN
-# Downgrade CrewAI to a version compatible with your LangChain versions (0.2.x)
+# CREW + LANGCHAIN (Stable V0.30.11 set)
 crewai==0.30.11
-langchain-openai>=0.1.21
-langchain-community>=0.2.4
+langchain==0.1.0 # The main LangChain library (often needed by older CrewAI)
+langchain-openai==0.0.8
+langchain-community==0.0.12 # Older version compatible with 0.0.8
 
 # SEARCH
 duckduckgo-search==6.1.0
