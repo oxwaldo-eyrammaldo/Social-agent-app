@@ -1,89 +1,140 @@
+# crew.py
 import os
-from crewai import Agent, Task, Crew, Process
+from dotenv import load_dotenv
 
-# Imports for LLM and Tools (Old Structure for CrewAI 0.30.11):
+load_dotenv()
+
+from crewai import Agent, Task, Crew
 from langchain_openai import ChatOpenAI
-from langchain.tools import DuckDuckGoSearchRun # UPDATED: Old import path
-from langchain.agents import Tool # UPDATED: Old import path
+from langchain_community.tools import DuckDuckGoSearchRun
 
-# 1. Define Tool Functions (No Decorators)
-def post_content_func(content: str):
-    """Mock posting content to social media."""
-    return f"POST_SUCCESS: {content}"
 
-def search_web_func(query: str):
+# ------------------------------------------------------
+# 1) LLM SETUP
+# ------------------------------------------------------
+
+def get_llm():
     """
-    Search the web for up-to-date information on a given topic.
-    The agent MUST use this tool to find trending news.
+    Safe LLM initializer that prevents deployment failures.
     """
     try:
-        search_tool = DuckDuckGoSearchRun()
-        return search_tool.run(query)
+        return ChatOpenAI(
+            model="gpt-4o-mini",  # cheap & compatible
+            temperature=0.3,
+            max_tokens=3000,
+        )
     except Exception as e:
-        return f"[SEARCH ERROR] {str(e)}"
+        # Fail-safe mock response if OpenAI key is not set
+        class MockLLM:
+            def invoke(self, prompt):
+                return f"[MOCK LLM RESPONSE due to error: {str(e)}]\nPrompt: {prompt}"
+        return MockLLM()
 
-# 2. Wrap them in the Tool Class
-post_tool = Tool(
-    name="Post Content",
-    func=post_content_func,
-    description="Mock posting content to social media."
+
+llm = get_llm()
+
+
+# ------------------------------------------------------
+# 2) SEARCH TOOL (with safe fallback)
+# ------------------------------------------------------
+
+def load_search_tool():
+    """
+    Returns DuckDuckGo tool if available, else a safe mock.
+    """
+    try:
+        return DuckDuckGoSearchRun()
+    except Exception as e:
+        class MockSearch:
+            def run(self, query):
+                return f"[MOCK SEARCH] No search available.\nQuery: {query}"
+        return MockSearch()
+
+
+search_tool = load_search_tool()
+
+
+# ------------------------------------------------------
+# 3) AGENT DEFINITIONS
+# ------------------------------------------------------
+
+research_agent = Agent(
+    name="Research Analyst",
+    role="Investigates and gathers latest online information.",
+    goal="Provide accurate, concise research from reliable sources.",
+    backstory=(
+        "You are a detail-oriented research expert who finds factual, "
+        "traceable online information and summarizes it clearly."
+    ),
+    tools=[search_tool],
+    llm=llm,
+    verbose=True,
 )
 
-search_tool = Tool(
-    name="Web Search Tool",
-    func=search_web_func,
-    description="Search the web for up-to-date information. Useful for finding trending news."
+
+writer_agent = Agent(
+    name="Content Writer",
+    role="Transforms research into high-quality narratives.",
+    goal="Convert research findings into engaging, well-structured content.",
+    backstory=(
+        "You are an exceptional writer skilled in summarizing, rewriting, "
+        "and generating content in a professional tone."
+    ),
+    llm=llm,
+    verbose=True,
 )
 
 
-# 3. Crew Generator Function
-def create_social_crew(topic, platform):
+# ------------------------------------------------------
+# 4) TASKS
+# ------------------------------------------------------
 
-    # -- LLM Setup --
-    openai_llm = ChatOpenAI(
-        model="gpt-4o-mini",
-        temperature=0.7
-    )
+research_task = Task(
+    description=(
+        "Search the web and compile key findings for the following topic:\n"
+        "{topic}\n\n"
+        "Return bullet points containing facts, stats, trends, and insights."
+    ),
+    expected_output="A structured research summary in bullet-point format.",
+    tools=[search_tool],
+    agent=research_agent,
+    context={}
+)
 
-    # -- Agents --
-    researcher = Agent(
-        role='Market Researcher',
-        goal=f'Find trending news about {topic}',
-        backstory='You are a researcher who finds viral news stories.',
-        verbose=True,
-        allow_delegation=False,
-        tools=[search_tool],
-        llm=openai_llm
-    )
 
-    manager = Agent(
-        role='Social Media Manager',
-        goal=f'Write a post for {platform}',
-        backstory='You write punchy, engaging content.',
-        verbose=True,
-        allow_delegation=False,
-        tools=[post_tool],
-        llm=openai_llm
-    )
+writing_task = Task(
+    description=(
+        "Using the research summary, write a clean, engaging narrative. "
+        "Keep it professional, factual, and easy to read."
+    ),
+    expected_output="A polished final article (4–8 paragraphs).",
+    agent=writer_agent,
+)
 
-    # -- Tasks --
-    task_research = Task(
-        description=f'Find 2 interesting recent news items about {topic}.',
-        expected_output='A summary of the news.',
-        agent=researcher
-    )
 
-    task_write = Task(
-        description=f'Write a {platform} post based on the research. Keep it under 280 chars if Twitter.',
-        expected_output='The final post text.',
-        agent=manager
-    )
+# ------------------------------------------------------
+# 5) CREW PIPELINE
+# ------------------------------------------------------
 
-    # -- Crew --
-    crew = Crew(
-        agents=[researcher, manager],
-        tasks=[task_research, task_write],
-        process=Process.sequential
-    )
+class ResearchCrew:
+    def __init__(self, topic: str):
+        self.topic = topic
 
-    return crew
+        # inject context
+        research_task.context = {"topic": topic}
+
+        # build crew
+        self.crew = Crew(
+            agents=[research_agent, writer_agent],
+            tasks=[research_task, writing_task],
+            verbose=True,
+        )
+
+    def run(self):
+        """
+        Executes both tasks sequentially.
+        """
+        try:
+            return self.crew.run()
+        except Exception as e:
+            return f"[CREW ERROR] {str(e)}"
