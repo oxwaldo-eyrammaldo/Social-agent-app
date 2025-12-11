@@ -6,8 +6,8 @@ beautifulsoup4
 streamlit
 
 # CREW + LANGCHAIN
-# Unpinning these allows pip to resolve compatible versions of langchain-core
-crewai==1.7.0
+# Downgrade CrewAI to a version compatible with your LangChain versions (0.2.x)
+crewai==0.30.11
 langchain-openai>=0.1.21
 langchain-community>=0.2.4
 
