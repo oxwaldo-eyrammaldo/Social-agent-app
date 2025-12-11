@@ -6,9 +6,10 @@ beautifulsoup4
 streamlit
 
 # CREW + LANGCHAIN
+# Unpinning these allows pip to resolve compatible versions of langchain-core
 crewai==1.7.0
-langchain-openai==0.1.21
-langchain-community==0.0.38
+langchain-openai>=0.1.21
+langchain-community>=0.2.4
 
 # SEARCH
 duckduckgo-search==6.1.0
